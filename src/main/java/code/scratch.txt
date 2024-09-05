@@ -1,0 +1,55 @@
+package code;
+
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import okhttp3.*;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
+
+public class Listener extends ListenerAdapter {
+    @Override
+    public void onMessageReceived(MessageReceivedEvent event) {
+        Message message = event.getMessage();
+        String content = message.getContentRaw();
+
+        if (content.equalsIgnoreCase("!ecoledirecte")) {
+            String url = "https://api.ecoledirecte.com/v3/login.awp?v=4.38.0";
+            String identifiant = "Qoyri";
+            String mdp = "Avoriaz74430";
+
+            OkHttpClient client = new OkHttpClient();
+
+            String jsonPayload = "data=" +
+                    "{\"uuid\":\"\", " +
+                    "\"identifiant\":\"" + identifiant + "\", " +
+                    "\"motdepasse\":\"" + mdp + "\", " +
+                    "\"isReLogin\":false}";
+
+            Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("Content-Type", "text/plain")
+                    .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.5790.171 Safari/537.36")
+                    .post(RequestBody.create(MediaType.parse("text/plain"), jsonPayload))
+                    .build();
+
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                    if (response.isSuccessful()) {
+                        String responseData = response.body().string();
+                        event.getChannel().sendMessage("Réponse de la requête de connexion : " + responseData).queue();
+                    } else {
+                        event.getChannel().sendMessage("La requête a retourné le code d'état HTTP " + response.code()).queue();
+                    }
+                }
+
+                @Override
+                public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+    }
+}
